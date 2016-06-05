@@ -49,8 +49,8 @@ void loop()
     delay(2 * 1000);              // wait for 2 seconds (2 * 1000ms)
     digitalWrite(13, LOW );       // turn the LED off by making the voltage LOW
 
-    // if we wouldn't reset the max & min then it would require louder 
-    // and louder noises to get it triggered again
+    // if we wouldn't clear the max & min then after first trigger it would get 
+    // triggered every single time no matter what read values were
     resetMaximumAndMinimum();     
   }
 }
