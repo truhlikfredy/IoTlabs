@@ -1,17 +1,48 @@
+#include <Adafruit_NeoPixel.h>      //downloaded from https://github.com/adafruit/Adafruit_NeoPixel
+#include <avr/power.h> 
+
 #define SERIAL_SPEED       115200
 
-#define REPORT_AFTER_TICKS 128
+#define REPORT_AFTER_TICKS 48
 
 #define PORT_MICROPHONE    A0
 #define PORT_LIGHT         A1
 #define PORT_TEMPERATURE   A2
 
+#define RGB_PIN            6
+#define RGB_LEDS           300
+
+#define MIC_TOP            1024
+#define MIC_BOTTOM         0
+
+#define LIGHT_TOP          700
+#define LIGHT_BOTTOM       0
+
+#define TEMP_TOP           500
+#define TEMP_BOTTOM        400
+
 #define MAX_INT            65535
 
 
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(RGB_LEDS, RGB_PIN, NEO_GRB + NEO_KHZ800);
+
+uint8_t       *pixels;
+unsigned char  globalR;
+unsigned char  globalG;
+unsigned char  globalB;
+unsigned char  brigthness = 5;
+
+
 void setup() {
+  //init serial
   Serial.begin(SERIAL_SPEED);
+
+  //init RGB
+  strip.begin();
+  strip.show();
+  pixels=strip.getPixels();
 }
+
 
 void loop() {
   static unsigned int  valueMicrophone  = 0;
@@ -23,9 +54,9 @@ void loop() {
   static unsigned long sumTemperature   = 0;
   static unsigned int  tick             = 0;
   
-  valueMicrophone  = analogRead(PORT_MICROPHONE );
-  valueLight       = analogRead(PORT_LIGHT      );
-  valueTemperature = analogRead(PORT_TEMPERATURE);
+  valueMicrophone  = constrain(analogRead(PORT_MICROPHONE ),   MIC_BOTTOM, MIC_TOP  );
+  valueLight       = constrain(analogRead(PORT_LIGHT      ), LIGHT_BOTTOM, LIGHT_TOP);
+  valueTemperature = constrain(analogRead(PORT_TEMPERATURE),  TEMP_BOTTOM, TEMP_TOP );
 
   if (valueMicrophone < minMicrophone) {
     minMicrophone = valueMicrophone;
@@ -42,16 +73,69 @@ void loop() {
     //output data for the processing GUI once in while
     Serial.print(maxMicrophone - minMicrophone);
     Serial.print(',');
-    Serial.print(  map(sumLight / REPORT_AFTER_TICKS,         0, 700, 0, 100));
+    Serial.print(  map(sumLight       / REPORT_AFTER_TICKS, LIGHT_BOTTOM, LIGHT_TOP, 0, 100));
     Serial.print(',');
-    Serial.println(map(sumTemperature / REPORT_AFTER_TICKS, 400, 500, 0, 100));  
+    Serial.println(map(sumTemperature / REPORT_AFTER_TICKS,  TEMP_BOTTOM,  TEMP_TOP, 0, 100));  
+
+    if ((maxMicrophone - minMicrophone) >350) {
+      brigthness = 1;
+    }
+    else {
+      brigthness = 5;
+    }
+    rainbow();
 
     minMicrophone    = MAX_INT;
     maxMicrophone    = 0;
     sumTemperature   = 0;
     sumLight         = 0;
+    
   }
 
+
   tick++;
+}
+
+
+void rainbow() {
+  static unsigned int i;
+
+  for (unsigned int j=strip.numPixels(); j>0; j--) {
+    unsigned int offset=j*3;
+    pixels[offset+0] = pixels[offset-3];
+    pixels[offset+1] = pixels[offset-2];
+    pixels[offset+2] = pixels[offset-1];
+  }
+
+  wheel(((i * 256 / strip.numPixels()) ) & 255);
+
+  pixels[0]=globalG;
+  pixels[1]=globalR;
+  pixels[2]=globalB;
+  
+  strip.show();
+  i++;
+}
+
+
+void wheel(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85) {
+    globalR = (85 - WheelPos)*3 >> brigthness;
+    globalG = 0;
+    globalB = WheelPos*3 >> brigthness;
+    return;
+  }
+  if(WheelPos < 170) {
+    WheelPos -= 85;
+    globalR = 0;
+    globalG = WheelPos*3 >> brigthness;
+    globalB = (85 - WheelPos)*3 >> brigthness;
+    return;
+  }
+  WheelPos -= 170;
+  globalR = WheelPos*3 >> brigthness;
+  globalG = (85 - WheelPos)*3 >> brigthness;
+  globalB = 0;
 }
 
