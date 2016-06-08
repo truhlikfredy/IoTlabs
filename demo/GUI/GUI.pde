@@ -1,13 +1,14 @@
 import processing.serial.*;
 
-final int PORT_TO_OPEN   = 4;
-final int PORT_BAUD_RATE = 115200;
-final int PORT_LINE_FEED = 10;      //new line character 
+final int     PORT_TO_OPEN   = 4;
+final int     PORT_BAUD_RATE = 115200;
+final boolean VERBOSE        = false;
+final int     PORT_LINE_FEED = 10;      //new line character 
 
-int x               = 1;            // horizontal position of the graph 
-int lastMicrophone  = 1;            // vertical value for microphone
-int lastLight       = 1;            // vertical value for light
-int lastTemperature = 1;            // vertical value for temperature
+int x               = 1;                // horizontal position of the graph 
+int lastMicrophone  = 1;                // vertical value for microphone
+int lastLight       = 1;                // vertical value for light
+int lastTemperature = 1;                // vertical value for temperature
 
 Serial myPort;       
 
@@ -24,23 +25,25 @@ void setup() {
 }
 
 void draw() { 
+  //needs to be present or the serialEvent woudn't get called
 } 
 
 void serialEvent(Serial myPort) {
   String myString = myPort.readStringUntil(PORT_LINE_FEED);
 
   if (myString != null) {
-    int values[];
     
     myString = trim(myString);
 
-    values = int(split(myString, ','));
+    int values[] = int(split(myString, ','));
     
     if (values.length == 3 ) {
-//      for (int i = 0; i < values.length; i++) {
-//        print("Value " + i + ": " + values[i] + "\t");
-//      }
-//      println();
+      if (VERBOSE) {
+        for (int i = 0; i < values.length; i++) {
+          print("Value " + i + ": " + values[i] + "\t\t");
+        }
+        println();
+      }
       
       int microphone  = (int)map(values[0], 0, 400,            0,     height/3);
       int light       = (int)map(values[1], 0, 100,     height/3, (height*2)/3);
