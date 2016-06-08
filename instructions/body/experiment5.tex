@@ -30,6 +30,7 @@ When this circuit is complete, the LED onboard the Arduino will flash when the m
 \label{sketch:exp5}
 \begin{lstlisting}
 /*
+<<<<<<< HEAD
 Sample code to work with a Thermistor
 
 Author: Anton Krug
@@ -93,4 +94,32 @@ void loop()
   }
 }
 
+=======
+Phenakistoscope
+Turns on an LED on then off 20 times a second in order to activate the Phenakistoscope
+*/
+
+// the setup function runs once when you press reset or power the board
+void setup() {
+  // initialize digital pin 13 as an output.
+  pinMode(13, OUTPUT);
+}
+
+// the loop function runs over and over again forever
+void loop() {
+  // turn the LED on 
+  // (HIGH is the voltage level)
+  digitalWrite(13, HIGH);
+	
+  //wait for 10 milliseconds
+  delay(10);
+	
+  // turn the LED off by making 
+  // the voltage LOW
+  digitalWrite(13, LOW);    
+	            
+  // wait for 30 milliseconds              
+  delay(30);
+}
+>>>>>>> 0581ff186ec5408b185455777b58f0f20d96f775
 \end{lstlisting}
