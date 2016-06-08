@@ -13,7 +13,7 @@ int lastTemperature = 1;                // vertical value for temperature
 Serial myPort;       
 
 void setup() {
-  size(800, 720);
+  size(800, 900);
   
   printArray(Serial.list());
   myPort = new Serial(this, Serial.list()[PORT_TO_OPEN], PORT_BAUD_RATE);
@@ -45,9 +45,9 @@ void serialEvent(Serial myPort) {
         println();
       }
       
-      int microphone  = (int)map(values[0], 0, 400,            0,     height/3);
-      int light       = (int)map(values[1], 0, 100,     height/3, (height*2)/3);
-      int temperature = (int)map(values[2], 0, 100, (height*2)/3,       height);
+      int microphone  = (int)map(values[0], 0, 400,     height/3,            0);
+      int light       = (int)map(values[1], 0, 100, (height*2)/3,     height/3);
+      int temperature = (int)map(values[2], 0, 100,       height, (height*2)/3);
       
       line(x-1, lastMicrophone,  x, microphone ); 
       line(x-1, lastLight,       x, light      ); 
