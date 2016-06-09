@@ -3,7 +3,7 @@
 
 #define SERIAL_SPEED       115200
 
-#define REPORT_AFTER_TICKS 48
+#define REPORT_AFTER_TICKS 96      // can't be set to number 16 or smaller, needs at least some ticks to work properly
 
 #define PORT_MICROPHONE    A0
 #define PORT_LIGHT         A1
@@ -11,6 +11,9 @@
 
 #define RGB_PIN            6
 #define RGB_LEDS           300
+#define RGB_BRIGHT         4        // 1=maximum brightness, 8=minimum brightness
+
+#define MIC_CLAP_THRESH    450
 
 #define MIC_TOP            1024
 #define MIC_BOTTOM         0
@@ -30,8 +33,7 @@ uint8_t       *pixels;
 unsigned char  globalR;
 unsigned char  globalG;
 unsigned char  globalB;
-unsigned char  brigthness = 5;
-
+unsigned char  brigthness = RGB_BRIGHT;   
 
 void setup() {
   //init serial
@@ -54,9 +56,9 @@ void loop() {
   static unsigned long sumTemperature   = 0;
   static unsigned int  tick             = 0;
   
-  valueMicrophone  = constrain(analogRead(PORT_MICROPHONE ),   MIC_BOTTOM, MIC_TOP  );
-  valueLight       = constrain(analogRead(PORT_LIGHT      ), LIGHT_BOTTOM, LIGHT_TOP);
-  valueTemperature = constrain(analogRead(PORT_TEMPERATURE),  TEMP_BOTTOM, TEMP_TOP );
+  valueMicrophone  = analogRead(PORT_MICROPHONE );
+  valueLight       = analogRead(PORT_LIGHT      );
+  valueTemperature = analogRead(PORT_TEMPERATURE);
 
   if (valueMicrophone < minMicrophone) {
     minMicrophone = valueMicrophone;
@@ -71,28 +73,41 @@ void loop() {
 
   if ((tick % REPORT_AFTER_TICKS) == 0 ) {
     //output data for the processing GUI once in while
+
+    sumLight       = constrain(sumLight       / REPORT_AFTER_TICKS, LIGHT_BOTTOM, LIGHT_TOP);
+    sumTemperature = constrain(sumTemperature / REPORT_AFTER_TICKS,  TEMP_BOTTOM, TEMP_TOP );
+    
     Serial.print(maxMicrophone - minMicrophone);
     Serial.print(',');
-    Serial.print(  map(sumLight       / REPORT_AFTER_TICKS, LIGHT_BOTTOM, LIGHT_TOP, 0, 100));
+    Serial.print(  map(sumLight,       LIGHT_BOTTOM, LIGHT_TOP, 0, 100));
     Serial.print(',');
-    Serial.println(map(sumTemperature / REPORT_AFTER_TICKS,  TEMP_BOTTOM,  TEMP_TOP, 0, 100));  
+    Serial.println(map(sumTemperature, TEMP_BOTTOM,  TEMP_TOP,  0, 100));  
 
-    if ((maxMicrophone - minMicrophone) >350) {
+    if ((maxMicrophone - minMicrophone) > MIC_CLAP_THRESH) {
       brigthness = 1;
     }
     else {
-      brigthness = 5;
+      brigthness = RGB_BRIGHT;
     }
-    rainbow();
 
     minMicrophone    = MAX_INT;
     maxMicrophone    = 0;
     sumTemperature   = 0;
     sumLight         = 0;
-    
   }
 
+  // delay in time the led movement event, 
+  // this allows some ADC readings be done in between and not having large gaps in the ADC readings
+  // more frequent but smaller gaps are better
+  if ((tick % REPORT_AFTER_TICKS) == 8 ) {
+    rainbow();
+  }
 
+  // delay in time the led display refresh
+  if ((tick % REPORT_AFTER_TICKS) == 16 ) {
+    strip.show();
+  }
+  
   tick++;
 }
 
@@ -113,7 +128,6 @@ void rainbow() {
   pixels[1]=globalR;
   pixels[2]=globalB;
   
-  strip.show();
   i++;
 }
 
