@@ -5,6 +5,9 @@
 
 #define REPORT_AFTER_TICKS 96       // can't be set to number 16 or smaller, needs at least some ticks to work properly
 
+#define TOUCHPAD_A_PIN     2
+#define TOUCHPAD_B_PIN     3
+
 #define PORT_MICROPHONE    A0
 #define PORT_LIGHT         A1
 #define PORT_TEMPERATURE   A2
@@ -23,6 +26,7 @@
 
 #define TEMP_TOP           500
 #define TEMP_BOTTOM        400
+#define TEMP_MAX_BRIGHT    48
 
 #define MAX_INT            65535
 
@@ -43,19 +47,27 @@ void setup() {
   strip.begin();
   strip.show();
   pixels=strip.getPixels();
+
+  //setup input from touchpad
+  pinMode(TOUCHPAD_A_PIN, INPUT);
+  pinMode(TOUCHPAD_B_PIN, INPUT);
 }
 
 
 void loop() {
-  static unsigned int  valueMicrophone  = 0;
-  static unsigned int  minMicrophone    = MAX_INT;
-  static unsigned int  maxMicrophone    = 0;
-  static unsigned int  valueLight       = 0;
-  static unsigned long sumLight         = 0;
-  static unsigned int  valueTemperature = 0;
-  static unsigned long sumTemperature   = 0;
-  static unsigned int  tick             = 0;
-  
+  static unsigned int     valueMicrophone  = 0;
+  static unsigned int     minMicrophone    = MAX_INT;
+  static unsigned int     maxMicrophone    = 0;
+  static unsigned int     valueLight       = 0;
+  static unsigned long    sumLight         = 0;
+  static unsigned int     valueTemperature = 0;
+  static unsigned long    sumTemperature   = 0;
+  static unsigned int     tick             = 0;
+  static unsigned int     sumButtonA       = 0;
+  static unsigned int     sumButtonB       = 0;
+  static          boolean microphoneMode   = true;
+  static unsigned char    temperature      = 0;
+   
   valueMicrophone  = analogRead(PORT_MICROPHONE );
   valueLight       = analogRead(PORT_LIGHT      );
   valueTemperature = analogRead(PORT_TEMPERATURE);
@@ -70,12 +82,20 @@ void loop() {
 
   sumTemperature += valueTemperature;
   sumLight       += valueLight;
+  sumButtonA     += digitalRead(TOUCHPAD_A_PIN);
+  sumButtonB     += digitalRead(TOUCHPAD_B_PIN);
 
   if ((tick % REPORT_AFTER_TICKS) == 0 ) {
     //output data for the processing GUI once in while
 
     sumLight       = constrain(sumLight       / REPORT_AFTER_TICKS, LIGHT_BOTTOM, LIGHT_TOP);
     sumTemperature = constrain(sumTemperature / REPORT_AFTER_TICKS,  TEMP_BOTTOM, TEMP_TOP );
+    
+    sumButtonA     = (sumButtonA * 100) / REPORT_AFTER_TICKS;
+    sumButtonB     = (sumButtonB * 100) / REPORT_AFTER_TICKS;
+
+    if (sumButtonA > 70) microphoneMode = true ;
+    if (sumButtonB > 70) microphoneMode = false;
     
     Serial.print(maxMicrophone - minMicrophone);
     Serial.print(',');
@@ -90,17 +110,26 @@ void loop() {
       brigthness = RGB_BRIGHT;
     }
 
+    sumTemperature    =constrain(sumTemperature, TEMP_BOTTOM, TEMP_TOP-25);
+    temperature      = map(sumTemperature, TEMP_BOTTOM,  TEMP_TOP-25,  0, TEMP_MAX_BRIGHT);
     minMicrophone    = MAX_INT;
     maxMicrophone    = 0;
     sumTemperature   = 0;
     sumLight         = 0;
+    sumButtonA       = 0;
+    sumButtonB       = 0;
   }
 
   // delay in time the led movement event, 
   // this allows some ADC readings be done in between and not having large gaps in the ADC readings
   // more frequent but smaller gaps are better
   if ((tick % REPORT_AFTER_TICKS) == 8 ) {
-    rainbow();
+    if (microphoneMode) {
+      rainbow();    
+    }
+    else {
+      fillByTemp(temperature);
+    }
   }
 
   // delay in time the led display refresh
@@ -109,6 +138,20 @@ void loop() {
   }
   
   tick++;
+}
+
+
+void fillByTemp(unsigned char temp) {
+  globalR = temp+10;
+  globalG = TEMP_MAX_BRIGHT - temp;
+  globalB = 0;
+
+  for (unsigned int j=0; j<strip.numPixels(); j++) {
+    unsigned int offset=j*3;
+    pixels[offset+0] = globalG;
+    pixels[offset+1] = globalR;
+    pixels[offset+2] = globalB;
+  }
 }
 
 
