@@ -11,7 +11,7 @@
 
 #define RGB_PIN            6
 #define RGB_LEDS           300
-#define RGB_BRIGHT         4        // 1=maximum brightness, 8=minimum brightness
+#define RGB_BRIGHT         5        // 1=maximum brightness, 8=minimum brightness
 
 #define MIC_CLAP_THRESH    450
 
@@ -112,6 +112,7 @@ void loop() {
 }
 
 
+//shift all leds by 1 and update first led
 void rainbow() {
   static unsigned int i;
 
@@ -131,7 +132,7 @@ void rainbow() {
   i++;
 }
 
-
+//Trying to display all the colors 
 void wheel(byte WheelPos) {
   WheelPos = 255 - WheelPos;
   if(WheelPos < 85) {
