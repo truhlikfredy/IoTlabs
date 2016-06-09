@@ -13,7 +13,7 @@
 #define RGB_LEDS           300
 #define RGB_BRIGHT         5        // 1=maximum brightness, 8=minimum brightness
 
-#define MIC_CLAP_THRESH    450
+#define MIC_CLAP_THRESH    250
 
 #define MIC_TOP            1024
 #define MIC_BOTTOM         0
