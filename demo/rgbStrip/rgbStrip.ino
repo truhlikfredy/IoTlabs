@@ -3,7 +3,7 @@
 
 #define SERIAL_SPEED       115200
 
-#define REPORT_AFTER_TICKS 96      // can't be set to number 16 or smaller, needs at least some ticks to work properly
+#define REPORT_AFTER_TICKS 96       // can't be set to number 16 or smaller, needs at least some ticks to work properly
 
 #define PORT_MICROPHONE    A0
 #define PORT_LIGHT         A1
@@ -132,7 +132,7 @@ void rainbow() {
   i++;
 }
 
-//Trying to display all the colors 
+//Trying to display all the colors https://en.wikipedia.org/wiki/HSL_and_HSV
 void wheel(byte WheelPos) {
   WheelPos = 255 - WheelPos;
   if(WheelPos < 85) {
