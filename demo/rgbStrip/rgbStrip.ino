@@ -1,5 +1,6 @@
 #include <Adafruit_NeoPixel.h>      //downloaded from https://github.com/adafruit/Adafruit_NeoPixel
-#include <avr/power.h> 
+#include <avr/power.h>
+#include <Servo.h>
 
 #define SERIAL_SPEED       115200
 
@@ -16,7 +17,7 @@
 #define RGB_LEDS           300
 #define RGB_BRIGHT         5        // 1=maximum brightness, 8=minimum brightness
 
-#define MIC_CLAP_THRESH    250
+#define MIC_CLAP_THRESH    300
 
 #define MIC_TOP            1024
 #define MIC_BOTTOM         0
@@ -31,7 +32,9 @@
 #define MAX_INT            65535
 
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(RGB_LEDS, RGB_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip   = Adafruit_NeoPixel(RGB_LEDS, RGB_PIN, NEO_GRB + NEO_KHZ800);
+Servo             myservo; 
+
 
 uint8_t       *pixels;
 unsigned char  globalR;
@@ -51,6 +54,9 @@ void setup() {
   //setup input from touchpad
   pinMode(TOUCHPAD_A_PIN, INPUT);
   pinMode(TOUCHPAD_B_PIN, INPUT);
+
+  //setup servo
+  myservo.attach(10);  
 }
 
 
@@ -102,6 +108,9 @@ void loop() {
     Serial.print(  map(sumLight,       LIGHT_BOTTOM, LIGHT_TOP, 0, 100));
     Serial.print(',');
     Serial.println(map(sumTemperature, TEMP_BOTTOM,  TEMP_TOP,  0, 100));  
+
+    myservo.write(map(sumLight, LIGHT_BOTTOM, LIGHT_TOP, 0, 180));
+
 
     if ((maxMicrophone - minMicrophone) > MIC_CLAP_THRESH) {
       brigthness = 1;
